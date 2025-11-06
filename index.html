@@ -1,0 +1,1091 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hearthstone Combo Trainer</title>
+    
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #2c2f33;
+            color: #ffffff;
+            margin: 0;
+            padding: 20px;
+        }
+
+        h1, h2 {
+            color: #f0b90b; /* สีทองแบบ Hearthstone */
+            border-bottom: 2px solid #f0b90b;
+            padding-bottom: 10px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: #23272a;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+        }
+
+        /* --- หน้า 1: Setup --- */
+        #setup-form {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .card-selection {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 20px;
+        }
+
+        .card-control {
+            background-color: #3b3f44;
+            border-radius: 8px;
+            padding: 15px;
+            text-align: center;
+            border: 1px solid #4f545c;
+        }
+
+        .card-control img {
+            width: 100%;
+            max-width: 180px;
+            border-radius: 8px;
+            border: 2px solid #1c1e21;
+        }
+
+        .card-control label {
+            display: block;
+            margin-top: 10px;
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+        
+        .card-control .card-note {
+            font-size: 0.85em;
+            color: #99aab5;
+            margin-top: 5px;
+            font-style: italic;
+        }
+
+        .card-control input,
+        .card-control select {
+            width: 90%;
+            padding: 8px;
+            margin-top: 5px;
+            border-radius: 4px;
+            border: 1px solid #7289da;
+            background-color: #2c2f33;
+            color: white;
+            font-size: 1em; 
+        }
+
+        .pupil-options {
+            font-size: 0.9em;
+            margin-top: 10px;
+        }
+
+        .mana-setup { /* [*** ลบ .mode-setup ออก ***] */
+            margin-top: 20px;
+            background-color: #3b3f44;
+            padding: 15px;
+            border-radius: 5px;
+        }
+        
+        #start-mana {
+             width: 100px; 
+        }
+
+        #start-button, #recommend-button {
+            color: white;
+            font-size: 1.2em;
+            font-weight: bold;
+            padding: 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        
+        #start-button {
+            background-color: #4caf50; 
+            margin-top: 20px;
+        }
+        #start-button:hover {
+            background-color: #45a049;
+        }
+
+        #recommend-button {
+            background-color: #7289da; 
+            margin-bottom: 20px;
+        }
+        #recommend-button:hover {
+            background-color: #5f73bc;
+        }
+
+
+        /* --- หน้า 2: Trainer --- */
+        #stats-bar {
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap; 
+            background-color: #1c1e21;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 1.1em;
+        }
+
+        .stat {
+            text-align: center;
+            min-width: 100px; 
+        }
+
+        .stat-label {
+            font-size: 0.8em;
+            color: #99aab5;
+        }
+
+        .stat-value {
+            font-size: 1.4em;
+            font-weight: bold;
+            color: #f0b90b;
+        }
+        
+        #prompt-message {
+            text-align: center;
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #f0b90b;
+            margin-bottom: 15px;
+            padding: 10px;
+            background-color: #3b3f44;
+            border-radius: 5px;
+        }
+
+        #board, #hand {
+            min-height: 220px;
+            background-color: #3b3f44;
+            border: 2px dashed #4f545c;
+            border-radius: 8px;
+            padding: 10px;
+            margin-bottom: 20px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: flex-start;
+        }
+
+        .card-in-hand {
+            position: relative;
+            width: 140px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            background-color: #23272a;
+            border-radius: 10px;
+            border: 2px solid #1c1e21;
+            overflow: hidden;
+        }
+
+        .card-in-hand img {
+            width: 100%;
+            display: block;
+        }
+
+        .card-cost {
+            position: absolute;
+            top: -5px;
+            left: -5px;
+            background-color: #4a90e2; 
+            color: white; 
+            font-weight: bold;
+            font-size: 1.5em;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 3px solid white;
+            text-shadow: 1px 1px 2px black;
+        }
+
+        .pupil-counter {
+            position: absolute;
+            bottom: 5px;
+            right: 5px;
+            background-color: #c0392b; 
+            color: white;
+            font-weight: bold;
+            font-size: 0.9em;
+            padding: 3px 6px;
+            border-radius: 4px;
+            border: 1px solid white;
+        }
+
+        .card-in-hand:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 10px 20px rgba(240, 185, 11, 0.4);
+        }
+
+        .card-in-hand.unplayable {
+            opacity: 0.5;
+            cursor: not-allowed;
+            border-color: #c0392b;
+        }
+
+        .card-in-hand.unplayable:hover {
+            transform: none;
+            box-shadow: none;
+        }
+
+        .minion-on-board {
+            width: 120px;
+            background-color: #2c2f33;
+            border: 2px solid #4caf50; 
+            border-radius: 8px;
+            padding: 5px;
+            text-align: center;
+        }
+
+        .minion-on-board img {
+            width: 100%;
+            border-radius: 4px;
+        }
+
+        .minion-on-board p {
+            margin: 5px 0 0 0;
+            font-weight: bold;
+            font-size: 0.9em;
+        }
+
+        .minion-on-board.targeting {
+            cursor: pointer;
+            border-color: #f0b90b;
+            box-shadow: 0 0 15px #f0b90b;
+        }
+
+        .trainer-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        #end-turn-button, #undo-button {
+            flex-grow: 1;
+            color: white;
+            font-size: 1.2em;
+            font-weight: bold;
+            padding: 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        
+        #end-turn-button {
+            background-color: #c0392b; 
+        }
+        #end-turn-button:hover {
+            background-color: #a93226;
+        }
+        
+        #undo-button {
+            background-color: #f39c12; 
+        }
+        #undo-button:hover {
+            background-color: #d35400;
+        }
+        #undo-button:disabled {
+            background-color: #5e6063;
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+        
+        /* --- Modal (Popup) CSS --- */
+        #modal-overlay {
+            display: none; 
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.75);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        #modal-box {
+            background-color: #2c2f33;
+            padding: 25px;
+            border-radius: 8px;
+            border: 2px solid #f0b90b;
+            width: 90%;
+            max-width: 500px;
+            text-align: center;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.5);
+        }
+        #modal-title {
+            margin-top: 0;
+            color: #f0b90b;
+        }
+        #modal-message {
+            font-size: 1.1em;
+            white-space: pre-wrap; 
+        }
+        #modal-close-button, #modal-restart-button {
+            font-size: 1em;
+            font-weight: bold;
+            padding: 10px 20px;
+            border-radius: 5px;
+            border: none;
+            cursor: pointer;
+            margin: 10px 5px 0 5px;
+        }
+        #modal-close-button {
+            background-color: #7289da;
+            color: white;
+        }
+        #modal-restart-button {
+            background-color: #4caf50;
+            color: white;
+        }
+        
+    </style>
+</head>
+<body>
+
+    <div id="setup-container" class="container">
+        <h1>🛠️ หน้าเตรียมการ์ด</h1>
+        <p>เลือกการ์ดเริ่มต้นและมานาสำหรับการฝึกฝน (โหมดจับเวลา 75 วินาที)</p>
+
+        <form id="setup-form">
+            <h2>เลือกการ์ด (สูงสุด 10 ใบ)</h2>
+            
+            <button type="button" id="recommend-button">ใช้ค่าเริ่มต้นที่แนะนำ</button>
+
+            <div class="card-selection">
+                
+                <div class="card-control">
+                    <img src="https://hearthstone.wiki.gg/images/thumb/EX1_144.png/300px-EX1_144.png" alt="Shadowstep">
+                    <label for="shadowstep">Shadowstep (สูงสุด 2)</label>
+                    <select id="shadowstep" name="shadowstep">
+                        <option value="0">0 ใบ</option>
+                        <option value="1">1 ใบ</option>
+                        <option value="2">2 ใบ</option>
+                    </select>
+                </div>
+
+                <div class="card-control">
+                    <img src="https://hearthstone.wiki.gg/images/thumb/VAC_304.png/300px-VAC_304.png" alt="Tidepool Pupil">
+                    <label for="tidepool">Tidepool Pupil (สูงสุด 2)</label>
+                    <select id="tidepool" name="tidepool">
+                        <option value="0">0 ใบ</option>
+                        <option value="1">1 ใบ</option>
+                        <option value="2">2 ใบ</option>
+                    </select>
+                    <div id="pupil-options-container" style="display: none;">
+                        <div class="pupil-options" id="pupil-1-options">
+                            <label for="pupil-1-spells">ใบที่ 1 (ร่ายเวทย์ไปแล้ว):</label>
+                            <select id="pupil-1-spells" name="pupil-1-spells">
+                                <option value="1">1</option>
+                                <option value="2">2</option>
+                                <option value="3">3</option>
+                            </select>
+                        </div>
+                        <div class="pupil-options" id="pupil-2-options" style="display: none;">
+                            <label for="pupil-2-spells">ใบที่ 2 (ร่ายเวทย์ไปแล้ว):</label>
+                            <select id="pupil-2-spells" name="pupil-2-spells">
+                                <option value="1">1</option>
+                                <option value="2">2</option>
+                                <option value="3">3</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card-control">
+                    <img src="https://hearthstone.wiki.gg/images/thumb/TOY_515.png/300px-TOY_515.png" alt="Sonya Waterdancer">
+                    <label for="sonya">Sonya Waterdancer (สูงสุด 1)</label>
+                    <select id="sonya" name="sonya">
+                        <option value="0">0 ใบ</option>
+                        <option value="1">1 ใบ</option>
+                    </select>
+                    <p class="card-note">การ์ดนี้ไม่ได้จำเป็นสำหรับเดคนี้</p>
+                </div>
+
+                <div class="card-control">
+                    <img src="https://hearthstone.wiki.gg/images/thumb/TOY_521t1.png/235px-TOY_521t1.png" alt="Sandbox Scoundrel">
+                    <label for="scoundrel">Sandbox Scoundrel (สูงสุด 2)</label>
+                    <select id="scoundrel" name="scoundrel">
+                        <option value="0">0 ใบ</option>
+                        <option value="1">1 ใบ</option>
+                        <option value="2">2 ใบ</option>
+                    </select>
+                </div>
+
+                <div class="card-control">
+                    <img src="https://hearthstone.wiki.gg/images/thumb/BG31_BOB.png/300px-BG31_BOB.png" alt="Bob the Bartender">
+                    <label for="bob">Bob the Bartender (สูงสุด 1)</label>
+                    <select id="bob" name="bob">
+                        <option value="0">0 ใบ</option>
+                        <option value="1">1 ใบ</option>
+                    </select>
+                </div>
+
+                <div class="card-control">
+                    <img src="https://hearthstone.wiki.gg/images/thumb/TIME_064.png/300px-TIME_064.png" alt="Chrono-Lord Deios">
+                    <label for="deios">Chrono-Lord Deios (สูงสุด 1)</label>
+                    <select id="deios" name="deios">
+                        <option value="0">0 ใบ</option>
+                        <option value="1">1 ใบ</option>
+                    </select>
+                </div>
+
+                <div class="card-control">
+                    <img src="https://hearthstone.wiki.gg/images/thumb/VAC_321.png/300px-VAC_321.png" alt="Incindius">
+                    <label for="incindius">Incindius (สูงสุด 1)</label>
+                    <select id="incindius" name="incindius">
+                        <option value="0">0 ใบ</option>
+                        <option value="1">1 ใบ</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="mana-setup">
+                <h2>เลือกมานาเริ่มต้น</h2>
+                <label for="start-mana">มานา (1-10):</label>
+                <input type="number" id="start-mana" name="start-mana" min="1" max="10" value="10">
+            </div>
+            
+            <button type="button" id="start-button">ยืนยันและเริ่มฝึกฝน</button>
+        </form>
+    </div>
+
+    <div id="trainer-container" class="container" style="display: none;">
+        <h1>⚔️ หน้าฝึกฝนคอมโบ</h1>
+
+        <div id="stats-bar">
+            <div class="stat">
+                <div class="stat-label">มานาเหลือ</div>
+                <div class="stat-value" id="mana-current">10</div>
+            </div>
+            <div class="stat">
+                <div class="stat-label">Step ที่เล่น</div>
+                <div class="stat-value" id="step-count">0</div>
+            </div>
+            <div class="stat">
+                <div class="stat-label">Eruption ในเดค</div>
+                <div class="stat-value" id="eruption-count">0</div>
+            </div>
+            <div class="stat">
+                <div class="stat-label">Eruption Damage</div>
+                <div class="stat-value" id="eruption-damage">1</div>
+            </div>
+            <div class="stat" id="timer-stat">
+                <div class="stat-label">เวลาที่เหลือ</div>
+                <div class="stat-value" id="timer-display">75</div>
+            </div>
+        </div>
+
+        <div id="prompt-message" style="display: none;"></div>
+
+        <h2>สนาม (Minions)</h2>
+        <div id="board">
+            </div>
+
+        <h2>การ์ดบนมือ (Hand)</h2>
+        <div id="hand">
+            </div>
+
+        <div class="trainer-buttons">
+            <button id="undo-button" disabled>ย้อนกลับ (Undo)</button>
+            <button id="end-turn-button">จบเทิร์น (จบการฝึกฝน)</button>
+        </div>
+    </div>
+
+    <div id="modal-overlay">
+        <div id="modal-box">
+            <h2 id="modal-title"></h2>
+            <p id="modal-message"></p>
+            <button id="modal-close-button">ปิด</button>
+            <button id="modal-restart-button" style="display: none;">กลับหน้าแรก</button>
+        </div>
+    </div>
+
+
+    <script>
+        // ฐานข้อมูลการ์ด (ใช้ร่วมกัน)
+        const CARD_DB = {
+            'shadowstep': { id: 'shadowstep', name: 'Shadowstep', baseCost: 0, type: 'Spell', img: 'https://hearthstone.wiki.gg/images/thumb/EX1_144.png/300px-EX1_144.png' },
+            'tidepool': { id: 'tidepool', name: 'Tidepool Pupil', baseCost: 2, type: 'Minion', img: 'https://hearthstone.wiki.gg/images/thumb/VAC_304.png/300px-VAC_304.png' },
+            'sonya': { id: 'sonya', name: 'Sonya Waterdancer', baseCost: 4, type: 'Minion', img: 'https://hearthstone.wiki.gg/images/thumb/TOY_515.png/300px-TOY_515.png' },
+            'scoundrel': { id: 'scoundrel', name: 'Sandbox Scoundrel', baseCost: 1, type: 'Minion', img: 'https://hearthstone.wiki.gg/images/thumb/TOY_521t1.png/235px-TOY_521t1.png' },
+            'bob': { id: 'bob', name: 'Bob the Bartender', baseCost: 6, type: 'Minion', img: 'https://hearthstone.wiki.gg/images/thumb/BG31_BOB.png/300px-BG31_BOB.png' },
+            'deios': { id: 'deios', name: 'Chrono-Lord Deios', baseCost: 7, type: 'Minion', img: 'https://hearthstone.wiki.gg/images/thumb/TIME_064.png/300px-TIME_064.png' },
+            'incindius': { id: 'incindius', name: 'Incindius', baseCost: 7, type: 'Minion', img: 'https://hearthstone.wiki.gg/images/thumb/VAC_321.png/300px-VAC_321.png' }
+        };
+        
+        let modalOverlay, modalTitle, modalMessage, modalCloseButton, modalRestartButton;
+        let promptMessageEl;
+        
+        // [*** แก้ไข: ย้ายตัวแปร Timer มาไว้ global (script scope) ***]
+        let gameTimer = null;
+        let timeLeft = 75;
+
+        // --- ส่วน JS ของหน้า Setup ---
+        document.addEventListener('DOMContentLoaded', () => {
+            const tidepoolSelect = document.getElementById('tidepool');
+            const pupilOptionsContainer = document.getElementById('pupil-options-container');
+            const pupil1Options = document.getElementById('pupil-1-options');
+            const pupil2Options = document.getElementById('pupil-2-options');
+            const startButton = document.getElementById('start-button');
+            const recommendButton = document.getElementById('recommend-button'); 
+            
+            const setupContainer = document.getElementById('setup-container');
+            const trainerContainer = document.getElementById('trainer-container');
+            
+            modalOverlay = document.getElementById('modal-overlay');
+            modalTitle = document.getElementById('modal-title');
+            modalMessage = document.getElementById('modal-message');
+            modalCloseButton = document.getElementById('modal-close-button');
+            modalRestartButton = document.getElementById('modal-restart-button');
+            
+            promptMessageEl = document.getElementById('prompt-message');
+
+            // --- Modal Logic ---
+            function showPopup(title, message, showRestart = false) {
+                modalTitle.textContent = title;
+                modalMessage.textContent = message;
+                modalRestartButton.style.display = showRestart ? 'inline-block' : 'none';
+                modalOverlay.style.display = 'flex';
+            }
+            window.showPopup = showPopup; 
+
+            function hidePopup() {
+                modalOverlay.style.display = 'none';
+            }
+
+            modalCloseButton.addEventListener('click', hidePopup);
+            modalRestartButton.addEventListener('click', () => {
+                hidePopup();
+                document.getElementById('setup-container').style.display = 'block';
+                document.getElementById('trainer-container').style.display = 'none';
+            });
+            // --------------------
+
+            tidepoolSelect.addEventListener('change', (e) => {
+                const count = parseInt(e.target.value, 10);
+                if (count === 0) {
+                    pupilOptionsContainer.style.display = 'none';
+                    pupil1Options.style.display = 'none';
+                    pupil2Options.style.display = 'none';
+                } else if (count === 1) {
+                    pupilOptionsContainer.style.display = 'block';
+                    pupil1Options.style.display = 'block';
+                    pupil2Options.style.display = 'none';
+                } else {
+                    pupilOptionsContainer.style.display = 'block';
+                    pupil1Options.style.display = 'block';
+                    pupil2Options.style.display = 'block';
+                }
+            });
+
+            recommendButton.addEventListener('click', () => {
+                document.getElementById('shadowstep').value = '1';
+                document.getElementById('tidepool').value = '2';
+                tidepoolSelect.dispatchEvent(new Event('change')); 
+                
+                document.getElementById('pupil-1-spells').value = '2';
+                document.getElementById('pupil-2-spells').value = '1';
+                document.getElementById('sonya').value = '0';
+                document.getElementById('scoundrel').value = '1';
+                document.getElementById('bob').value = '1';
+                document.getElementById('deios').value = '1';
+                document.getElementById('incindius').value = '1';
+                document.getElementById('start-mana').value = '8';
+            });
+
+            startButton.addEventListener('click', () => {
+                const initialHand = [];
+                let totalCards = 0;
+                
+                const shadowstepCount = parseInt(document.getElementById('shadowstep').value, 10);
+                totalCards += shadowstepCount;
+                for (let i = 0; i < shadowstepCount; i++) {
+                    initialHand.push({ ...CARD_DB.shadowstep, currentCost: 0, instanceId: `card_${Date.now()}_${i}` });
+                }
+
+                const tidepoolCount = parseInt(document.getElementById('tidepool').value, 10);
+                totalCards += tidepoolCount;
+                if (tidepoolCount >= 1) {
+                    const spells1 = parseInt(document.getElementById('pupil-1-spells').value, 10);
+                    initialHand.push({ ...CARD_DB.tidepool, currentCost: 2, spellsPlayed: spells1, instanceId: `card_${Date.now()}_ss1` });
+                }
+                if (tidepoolCount === 2) {
+                    const spells2 = parseInt(document.getElementById('pupil-2-spells').value, 10);
+                    initialHand.push({ ...CARD_DB.tidepool, currentCost: 2, spellsPlayed: spells2, instanceId: `card_${Date.now()}_ss2` });
+                }
+
+                const sonyaCount = parseInt(document.getElementById('sonya').value, 10);
+                totalCards += sonyaCount;
+                if (sonyaCount > 0) {
+                    initialHand.push({ ...CARD_DB.sonya, currentCost: 4, instanceId: `card_${Date.now()}_s` });
+                }
+
+                const scoundrelCount = parseInt(document.getElementById('scoundrel').value, 10);
+                totalCards += scoundrelCount;
+                for (let i = 0; i < scoundrelCount; i++) {
+                    initialHand.push({ ...CARD_DB.scoundrel, currentCost: 1, instanceId: `card_${Date.now()}_sc${i}` });
+                }
+
+                const bobCount = parseInt(document.getElementById('bob').value, 10);
+                totalCards += bobCount;
+                if (bobCount > 0) {
+                    initialHand.push({ ...CARD_DB.bob, currentCost: 6, instanceId: `card_${Date.now()}_b` });
+                }
+
+                const deiosCount = parseInt(document.getElementById('deios').value, 10);
+                totalCards += deiosCount;
+                if (deiosCount > 0) {
+                    initialHand.push({ ...CARD_DB.deios, currentCost: 7, instanceId: `card_${Date.now()}_d` });
+                }
+
+                const incindiusCount = parseInt(document.getElementById('incindius').value, 10);
+                totalCards += incindiusCount;
+                if (incindiusCount > 0) {
+                    initialHand.push({ ...CARD_DB.incindius, currentCost: 7, instanceId: `card_${Date.now()}_i` });
+                }
+
+                if (totalCards > 10) {
+                    showPopup('ข้อผิดพลาด', 'การ์ดบนมือเริ่มต้นห้ามเกิน 10 ใบ!'); 
+                    return;
+                }
+
+                const startMana = parseInt(document.getElementById('start-mana').value, 10);
+                
+                // [*** แก้ไข: ลบ selectedMode ออก ***]
+
+                const initialSetup = {
+                    hand: initialHand,
+                    mana: startMana,
+                    mode: 'timed' // [*** แก้ไข: บังคับโหมด timed เสมอ ***]
+                };
+
+                setupContainer.style.display = 'none';
+                trainerContainer.style.display = 'block';
+                
+                initializeTrainer(initialSetup);
+            });
+        });
+
+
+        // --- ส่วน JS ของหน้า Trainer ---
+
+        let gameState = {};
+        let gameStateHistory = []; 
+
+        let manaCurrentEl, stepCountEl, eruptionCountEl, eruptionDamageEl, boardEl, handEl, endTurnButtonEl, undoButtonEl;
+        let timerStatEl, timerDisplayEl; 
+
+        // [*** เพิ่ม: ฟังก์ชันสำหรับลดเวลา (Penalty) ***]
+        function applyTimePenalty(seconds) {
+            if (gameState.isGameOver) return; 
+            
+            timeLeft -= seconds;
+            timerDisplayEl.textContent = timeLeft;
+
+            if (timeLeft <= 10 && timeLeft > 0) {
+                timerDisplayEl.style.color = '#c0392b';
+            }
+            
+            // ตรวจสอบว่าการลดเวลาทำให้เกมจบทันทีหรือไม่
+            if (timeLeft <= 0) {
+                updateTimer(); // เรียก updateTimer เพื่อจัดการ logic การจบเกม
+            }
+        }
+        
+        // [*** เพิ่ม: ฟังก์ชันสำหรับอัปเดตตัวจับเวลารายวินาที ***]
+        function updateTimer() {
+            timeLeft--;
+            timerDisplayEl.textContent = timeLeft;
+            
+            if (timeLeft <= 10) {
+                timerDisplayEl.style.color = '#c0392b'; // สีแดง
+            }
+
+            if (timeLeft <= 0) {
+                clearInterval(gameTimer);
+                if (!gameState.isGameOver) { 
+                    showPopup('หมดเวลา!', 'เวลาหมด! ระบบจะทำการสรุปผล', true);
+                    handleEndTurn(); 
+                }
+            }
+        }
+
+
+        function initializeTrainer(setup) {
+            manaCurrentEl = document.getElementById('mana-current');
+            stepCountEl = document.getElementById('step-count');
+            eruptionCountEl = document.getElementById('eruption-count');
+            eruptionDamageEl = document.getElementById('eruption-damage');
+            boardEl = document.getElementById('board');
+            handEl = document.getElementById('hand');
+            endTurnButtonEl = document.getElementById('end-turn-button');
+            undoButtonEl = document.getElementById('undo-button'); 
+            promptMessageEl = document.getElementById('prompt-message');
+            timerStatEl = document.getElementById('timer-stat');
+            timerDisplayEl = document.getElementById('timer-display');
+
+            if (gameTimer) clearInterval(gameTimer);
+
+            gameState = {
+                mana: setup.mana,
+                steps: 0,
+                eruptionCount: 0,
+                eruptionDamage: 1, 
+                hand: setup.hand,
+                board: [],
+                scoundrelDiscount: 0,
+                isTargeting: false,
+                targetingCard: null,
+                mode: setup.mode,
+                isGameOver: false 
+            };
+            
+            gameStateHistory = [];
+
+            endTurnButtonEl.removeEventListener('click', handleEndTurn);
+            endTurnButtonEl.addEventListener('click', handleEndTurn);
+            
+            undoButtonEl.removeEventListener('click', handleUndo);
+            undoButtonEl.addEventListener('click', handleUndo);
+
+            // [*** แก้ไข: เริ่ม timer เสมอ ***]
+            timerStatEl.style.display = 'block';
+            timeLeft = 75; // รีเซ็ตเวลา
+            timerDisplayEl.textContent = timeLeft;
+            timerDisplayEl.style.color = '#f0b90b'; 
+
+            gameTimer = setInterval(updateTimer, 1000); // เรียกฟังก์ชัน updateTimer ทุกวิ
+
+            updateUI();
+        }
+
+        // --- UI Functions ---
+
+        function updateUI() {
+            manaCurrentEl.textContent = gameState.mana;
+            stepCountEl.textContent = gameState.steps;
+            eruptionCountEl.textContent = gameState.eruptionCount;
+            eruptionDamageEl.textContent = gameState.eruptionCount === 0 ? 0 : gameState.eruptionDamage;
+
+            boardEl.innerHTML = '';
+            gameState.board.forEach(minion => {
+                const minionDiv = document.createElement('div');
+                minionDiv.className = 'minion-on-board';
+                minionDiv.dataset.instanceId = minion.instanceId;
+                minionDiv.innerHTML = `
+                    <img src="${minion.img}" alt="${minion.name}">
+                    <p>${minion.name}</p>
+                `;
+                
+                minionDiv.addEventListener('click', () => handleMinionClick(minion));
+                boardEl.appendChild(minionDiv);
+            });
+
+            handEl.innerHTML = '';
+            gameState.hand.forEach(card => {
+                const cardDiv = document.createElement('div');
+                cardDiv.className = 'card-in-hand';
+                cardDiv.dataset.instanceId = card.instanceId;
+                
+                const displayCost = Math.max(0, card.currentCost - gameState.scoundrelDiscount);
+                
+                const isPlayable = checkPlayable(card, displayCost);
+                if (!isPlayable) {
+                    cardDiv.classList.add('unplayable');
+                }
+
+                const baseCost = CARD_DB[card.id].baseCost;
+                let costColor = 'white';
+                
+                if (card.currentCost < baseCost) {
+                    costColor = '#00ff00'; 
+                } else if (card.currentCost > baseCost) {
+                    costColor = '#ff0000'; 
+                }
+                
+                if (displayCost < card.currentCost) {
+                    costColor = '#00ff00';
+                }
+
+                let html = `
+                    <img src="${card.img}" alt="${card.name}">
+                    <div class="card-cost" style="color: ${costColor};">
+                        ${displayCost}
+                    </div>
+                `;
+
+                if (card.id === 'tidepool') {
+                    html += `<div class="pupil-counter">Spells: ${card.spellsPlayed}</div>`;
+                }
+
+                cardDiv.innerHTML = html;
+                
+                if (isPlayable) {
+                    cardDiv.addEventListener('click', () => playCard(card));
+                }
+                handEl.appendChild(cardDiv);
+            });
+            
+            if (gameState.isTargeting) {
+                promptMessageEl.textContent = "กรุณาเลือกมินเนี่ยนบนสนาม 1 ตัว";
+                promptMessageEl.style.display = 'block';
+            } else {
+                promptMessageEl.style.display = 'none';
+            }
+
+            undoButtonEl.disabled = gameStateHistory.length === 0 || gameState.isGameOver;
+            updateTargetingUI();
+            
+            if (gameState.isGameOver) {
+                endTurnButtonEl.disabled = true;
+                undoButtonEl.disabled = true;
+            } else {
+                endTurnButtonEl.disabled = false;
+            }
+        }
+
+        function checkPlayable(card, displayCost) {
+            if (gameState.isGameOver) return false; 
+            if (gameState.isTargeting) return false; 
+            if (displayCost > gameState.mana) return false; 
+
+            if (card.type === 'Minion') {
+                if (gameState.board.length >= 7) return false; 
+            }
+
+            if (card.id === 'shadowstep') {
+                if (gameState.board.length === 0) return false; 
+            }
+
+            if (card.id === 'tidepool') {
+                if (card.spellsPlayed < 3) return false; 
+            }
+
+            return true;
+        }
+
+        function updateTargetingUI() {
+            document.querySelectorAll('.minion-on-board.targeting').forEach(el => el.classList.remove('targeting'));
+
+            if (gameState.isTargeting && gameState.targetingCard.id === 'shadowstep') {
+                document.querySelectorAll('.minion-on-board').forEach(el => el.classList.add('targeting'));
+            }
+        }
+
+        // --- Game Logic Functions ---
+
+        function handleUndo() {
+            if (gameStateHistory.length === 0 || gameState.isGameOver) return;
+            gameState = gameStateHistory.pop();
+            // (หมายเหตุ: การ Undo จะไม่คืนเวลาที่เสียไป)
+            updateUI();
+        }
+
+        function playCard(card) {
+            const displayCost = Math.max(0, card.currentCost - gameState.scoundrelDiscount);
+            if (!checkPlayable(card, displayCost)) {
+                console.warn("พยายามเล่นการ์ดที่เล่นไม่ได้:", card);
+                return;
+            }
+            
+            gameStateHistory.push(JSON.parse(JSON.stringify(gameState)));
+
+            const cost = displayCost;
+            gameState.mana -= cost;
+            gameState.steps++;
+            
+            if (gameState.scoundrelDiscount > 0 && card.id !== 'scoundrel') {
+                 gameState.scoundrelDiscount = 0;
+            }
+            
+            gameState.hand = gameState.hand.filter(c => c.instanceId !== card.instanceId);
+
+            switch (card.id) {
+                case 'shadowstep':
+                    handleShadowstep(card);
+                    triggerSpellPlayed();
+                    break;
+                case 'tidepool':
+                    handleTidepool(card);
+                    break;
+                case 'sonya':
+                    handleSonya(card);
+                    break;
+                case 'scoundrel':
+                    handleScoundrel(card);
+                    break;
+                case 'bob':
+                    handleBob(card);
+                    break;
+                case 'deios':
+                    handleDeios(card);
+                    break;
+                case 'incindius':
+                    handleIncindius(card);
+                    break;
+            }
+
+            if (card.type === 'Minion') {
+                triggerMinionPlayed(card);
+            }
+
+            updateUI();
+        }
+
+        function triggerSpellPlayed() {
+            gameState.hand.forEach(card => {
+                if (card.id === 'tidepool') {
+                    card.spellsPlayed++;
+                }
+            });
+        }
+        
+        function triggerMinionPlayed(playedMinion) {
+            const sonya = gameState.board.find(m => m.id === 'sonya');
+            
+            if (sonya && playedMinion.id !== 'sonya' && CARD_DB[playedMinion.id].baseCost === 1) {
+                
+                if (gameState.hand.length < 10) {
+                    const copy = { 
+                        ...CARD_DB[playedMinion.id], 
+                        currentCost: 0, 
+                        instanceId: `card_${Date.now()}_sonya_copy`,
+                        ...(playedMinion.id === 'tidepool' && { spellsPlayed: 0 }) 
+                    };
+                    gameState.hand.push(copy);
+                }
+            }
+        }
+
+        function isDeiosOnBoard() {
+            return gameState.board.some(minion => minion.id === 'deios');
+        }
+
+        // --- Card Handlers ---
+
+        function handleShadowstep(card) {
+            gameState.isTargeting = true;
+            gameState.targetingCard = card;
+            updateUI(); 
+        }
+
+        function handleMinionClick(minion) {
+            if (!gameState.isTargeting) return;
+
+            if (gameState.targetingCard.id === 'shadowstep') {
+                
+                gameStateHistory.push(JSON.parse(JSON.stringify(gameState)));
+
+                gameState.board = gameState.board.filter(m => m.instanceId !== minion.instanceId);
+
+                if (gameState.hand.length < 10) {
+                    const bouncedCardInfo = CARD_DB[minion.id]; 
+                    const bouncedCard = { ...bouncedCardInfo }; 
+                    
+                    bouncedCard.currentCost = Math.max(0, bouncedCardInfo.baseCost - 2); 
+                    bouncedCard.instanceId = minion.instanceId; 
+                    
+                    if (bouncedCard.id === 'tidepool') {
+                        bouncedCard.spellsPlayed = 0; 
+                    }
+                    
+                    gameState.hand.push(bouncedCard);
+                }
+
+                gameState.isTargeting = false;
+                gameState.targetingCard = null;
+                updateUI();
+            }
+        }
+
+        function handleTidepool(card) {
+            gameState.board.push(card);
+            
+            const amount = isDeiosOnBoard() ? 2 : 1;
+            for (let i = 0; i < amount; i++) {
+                if (gameState.hand.length < 10) {
+                    gameState.hand.push({ 
+                        ...CARD_DB.shadowstep, 
+                        currentCost: 0, 
+                        instanceId: `card_${Date.now()}_pupil_ss${i}` 
+                    });
+                }
+            }
+            
+            // [*** เพิ่ม: ลดเวลา ***]
+            const penalty = isDeiosOnBoard() ? 4 : 2;
+            applyTimePenalty(penalty);
+        }
+
+        function handleSonya(card) {
+            gameState.board.push(card);
+        }
+
+        function handleScoundrel(card) {
+            gameState.board.push(card);
+            gameState.scoundrelDiscount = isDeiosOnBoard() ? 6 : 3;
+        }
+
+        function handleBob(card) {
+            gameState.board.push(card);
+            const manaGain = isDeiosOnBoard() ? 6 : 3;
+            gameState.mana = Math.min(10, gameState.mana + manaGain);
+            
+            // [*** เพิ่ม: ลดเวลา ***]
+            const penalty = isDeiosOnBoard() ? 4 : 2;
+            applyTimePenalty(penalty);
+        }
+
+        function handleDeios(card) {
+            gameState.board.push(card);
+        }
+
+        function handleIncindius(card) {
+            gameState.board.push(card);
+            const amount = isDeiosOnBoard() ? 10 : 5;
+            gameState.eruptionCount += amount;
+        }
+
+
+        function handleEndTurn() {
+            if (gameState.isGameOver) return; 
+            gameState.isGameOver = true;
+            
+            if (gameTimer) clearInterval(gameTimer);
+
+            const damageIncrease = isDeiosOnBoard() ? 2 : 1;
+            gameState.eruptionDamage += damageIncrease;
+            
+            const totalDamage = gameState.eruptionCount * gameState.eruptionDamage;
+
+            const messageString = `
+Steps ที่เล่น: ${gameState.steps}
+Eruptions ในเดค: ${gameState.eruptionCount}
+Eruption Damage ต่อใบ (ณ สิ้นเทิร์น): ${gameState.eruptionDamage}
+-------------------------
+ความเสียหายรวมเทิร์นถัดไป: ${totalDamage}
+            `;
+
+            showPopup('จบการฝึกฝน', messageString, true);
+            
+            updateUI();
+        }
+
+    </script>
+</body>
+</html>
