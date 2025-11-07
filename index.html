@@ -19,6 +19,13 @@
             border-bottom: 2px solid #f0b90b;
             padding-bottom: 10px;
         }
+        
+        /* [*** เพิ่ม: Style สำหรับตัวนับ ***] */
+        h2 .card-counter {
+            color: #99aab5;
+            font-weight: normal;
+            font-size: 0.8em;
+        }
 
         .container {
             max-width: 1200px;
@@ -88,7 +95,7 @@
             margin-top: 10px;
         }
 
-        .mana-setup { /* [*** ลบ .mode-setup ออก ***] */
+        .mana-setup { 
             margin-top: 20px;
             background-color: #3b3f44;
             padding: 15px;
@@ -353,6 +360,47 @@
             color: white;
         }
         
+        .discover-grid {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        .discover-option-card {
+            width: 100px;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: transform 0.2s, box-shadow 0.2s;
+            border: 2px solid transparent;
+        }
+        .discover-option-card:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 15px #f0b90b;
+            border-color: #f0b90b;
+        }
+        
+        .bob-option {
+            background-color: #3b3f44;
+            border: 1px solid #4f545c;
+            border-radius: 8px;
+            padding: 10px;
+            cursor: pointer;
+            width: 100px; 
+            transition: background-color 0.2s;
+        }
+        .bob-option:hover {
+            background-color: #4f545c;
+        }
+        .bob-option img {
+            width: 80px;
+            border-radius: 5px;
+        }
+        .bob-option p {
+            margin: 5px 0 0 0;
+            font-size: 0.8em;
+            font-weight: bold;
+        }
+        
     </style>
 </head>
 <body>
@@ -452,6 +500,17 @@
                         <option value="1">1 ใบ</option>
                     </select>
                 </div>
+                
+                <div class="card-control">
+                    <img src="https://hearthstone.wiki.gg/images/thumb/EDR_979.png/300px-EDR_979.png?8fbc98" alt="Ancient of Yore">
+                    <label for="ancientofyore">Ancient of Yore (สูงสุด 2)</label>
+                    <select id="ancientofyore" name="ancientofyore">
+                        <option value="0">0 ใบ</option>
+                        <option value="1">1 ใบ</option>
+                        <option value="2">2 ใบ</option>
+                    </select>
+                </div>
+                
             </div>
 
             <div class="mana-setup">
@@ -459,7 +518,7 @@
                 <label for="start-mana">มานา (1-10):</label>
                 <input type="number" id="start-mana" name="start-mana" min="1" max="10" value="10">
             </div>
-            
+
             <button type="button" id="start-button">ยืนยันและเริ่มฝึกฝน</button>
         </form>
     </div>
@@ -492,11 +551,11 @@
 
         <div id="prompt-message" style="display: none;"></div>
 
-        <h2>สนาม (Minions)</h2>
+        <h2>สนาม (Minions) <span class="card-counter">(<span id="board-count">0</span>/7)</span></h2>
         <div id="board">
             </div>
 
-        <h2>การ์ดบนมือ (Hand)</h2>
+        <h2>การ์ดบนมือ (Hand) <span class="card-counter">(<span id="hand-count">0</span>/10)</span></h2>
         <div id="hand">
             </div>
 
@@ -509,7 +568,7 @@
     <div id="modal-overlay">
         <div id="modal-box">
             <h2 id="modal-title"></h2>
-            <p id="modal-message"></p>
+            <div id="modal-message"></div>
             <button id="modal-close-button">ปิด</button>
             <button id="modal-restart-button" style="display: none;">กลับหน้าแรก</button>
         </div>
@@ -517,7 +576,7 @@
 
 
     <script>
-        // ฐานข้อมูลการ์ด (ใช้ร่วมกัน)
+        // [*** ฐานข้อมูลการ์ด (อัปเดต) ***]
         const CARD_DB = {
             'shadowstep': { id: 'shadowstep', name: 'Shadowstep', baseCost: 0, type: 'Spell', img: 'https://hearthstone.wiki.gg/images/thumb/EX1_144.png/300px-EX1_144.png' },
             'tidepool': { id: 'tidepool', name: 'Tidepool Pupil', baseCost: 2, type: 'Minion', img: 'https://hearthstone.wiki.gg/images/thumb/VAC_304.png/300px-VAC_304.png' },
@@ -525,13 +584,20 @@
             'scoundrel': { id: 'scoundrel', name: 'Sandbox Scoundrel', baseCost: 1, type: 'Minion', img: 'https://hearthstone.wiki.gg/images/thumb/TOY_521t1.png/235px-TOY_521t1.png' },
             'bob': { id: 'bob', name: 'Bob the Bartender', baseCost: 6, type: 'Minion', img: 'https://hearthstone.wiki.gg/images/thumb/BG31_BOB.png/300px-BG31_BOB.png' },
             'deios': { id: 'deios', name: 'Chrono-Lord Deios', baseCost: 7, type: 'Minion', img: 'https://hearthstone.wiki.gg/images/thumb/TIME_064.png/300px-TIME_064.png' },
-            'incindius': { id: 'incindius', name: 'Incindius', baseCost: 7, type: 'Minion', img: 'https://hearthstone.wiki.gg/images/thumb/VAC_321.png/300px-VAC_321.png' }
+            'incindius': { id: 'incindius', name: 'Incindius', baseCost: 7, type: 'Minion', img: 'https://hearthstone.wiki.gg/images/thumb/VAC_321.png/300px-VAC_321.png' },
+            'ancientofyore': { id: 'ancientofyore', name: 'Ancient of Yore', baseCost: 5, type: 'Minion', img: 'https://hearthstone.wiki.gg/images/thumb/EDR_979.png/300px-EDR_979.png?8fbc98' }, // [*** แก้ไข Link ***]
+            
+            'coin': { id: 'coin', name: 'The Coin', baseCost: 0, type: 'Spell', img: 'https://hearthstone.wiki.gg/images/thumb/GAME_005.png/300px-GAME_005.png' },
+            'preparation': { id: 'preparation', name: 'Preparation', baseCost: 0, type: 'Spell', img: 'https://hearthstone.wiki.gg/images/thumb/EX1_145.png/300px-EX1_145.png' },
+            'magmarager': { id: 'magmarager', name: 'Magma Rager', baseCost: 3, type: 'Minion', img: 'https://hearthstone.wiki.gg/images/thumb/CS2_118.png/300px-CS2_118.png' },
+            'icerager': { id: 'icerager', name: 'Ice Rager', baseCost: 3, type: 'Minion', img: 'https://hearthstone.wiki.gg/images/thumb/AT_092.png/300px-AT_092.png' },
+            'amgamrager': { id: 'amgamrager', name: 'Am\'gam Rager', baseCost: 3, type: 'Minion', img: 'https://hearthstone.wiki.gg/images/thumb/OG_248.png/300px-OG_248.png' },
+            'thalnos': { id: 'thalnos', name: 'Bloodmage Thalnos', baseCost: 2, type: 'Minion', img: 'https://hearthstone.wiki.gg/images/thumb/EX1_012.png/300px-EX1_012.png' }
         };
         
         let modalOverlay, modalTitle, modalMessage, modalCloseButton, modalRestartButton;
         let promptMessageEl;
         
-        // [*** แก้ไข: ย้ายตัวแปร Timer มาไว้ global (script scope) ***]
         let gameTimer = null;
         let timeLeft = 75;
 
@@ -558,15 +624,19 @@
             // --- Modal Logic ---
             function showPopup(title, message, showRestart = false) {
                 modalTitle.textContent = title;
-                modalMessage.textContent = message;
+                modalMessage.innerHTML = `<p>${message.replace(/\n/g, '<br>')}</p>`; 
+                modalMessage.className = ''; 
                 modalRestartButton.style.display = showRestart ? 'inline-block' : 'none';
+                modalCloseButton.style.display = 'inline-block';
                 modalOverlay.style.display = 'flex';
             }
             window.showPopup = showPopup; 
 
             function hidePopup() {
                 modalOverlay.style.display = 'none';
+                modalCloseButton.style.display = 'inline-block';
             }
+            window.hidePopup = hidePopup; 
 
             modalCloseButton.addEventListener('click', hidePopup);
             modalRestartButton.addEventListener('click', () => {
@@ -605,6 +675,7 @@
                 document.getElementById('bob').value = '1';
                 document.getElementById('deios').value = '1';
                 document.getElementById('incindius').value = '1';
+                document.getElementById('ancientofyore').value = '1'; // [*** เพิ่ม ***]
                 document.getElementById('start-mana').value = '8';
             });
 
@@ -659,19 +730,23 @@
                     initialHand.push({ ...CARD_DB.incindius, currentCost: 7, instanceId: `card_${Date.now()}_i` });
                 }
 
+                const ancientofyoreCount = parseInt(document.getElementById('ancientofyore').value, 10);
+                totalCards += ancientofyoreCount;
+                for (let i = 0; i < ancientofyoreCount; i++) {
+                    initialHand.push({ ...CARD_DB.ancientofyore, currentCost: 5, instanceId: `card_${Date.now()}_aoy${i}` });
+                }
+
                 if (totalCards > 10) {
                     showPopup('ข้อผิดพลาด', 'การ์ดบนมือเริ่มต้นห้ามเกิน 10 ใบ!'); 
                     return;
                 }
 
                 const startMana = parseInt(document.getElementById('start-mana').value, 10);
-                
-                // [*** แก้ไข: ลบ selectedMode ออก ***]
 
                 const initialSetup = {
                     hand: initialHand,
                     mana: startMana,
-                    mode: 'timed' // [*** แก้ไข: บังคับโหมด timed เสมอ ***]
+                    mode: 'timed' 
                 };
 
                 setupContainer.style.display = 'none';
@@ -689,31 +764,89 @@
 
         let manaCurrentEl, stepCountEl, eruptionCountEl, eruptionDamageEl, boardEl, handEl, endTurnButtonEl, undoButtonEl;
         let timerStatEl, timerDisplayEl; 
+        let boardCountEl, handCountEl; // [*** เพิ่ม: ตัวแปรตัวนับ ***]
 
-        // [*** เพิ่ม: ฟังก์ชันสำหรับลดเวลา (Penalty) ***]
-        function applyTimePenalty(seconds) {
-            if (gameState.isGameOver) return; 
-            
-            timeLeft -= seconds;
-            timerDisplayEl.textContent = timeLeft;
+        // [*** Helper: สับเปลี่ยน Array ***]
+        function shuffle(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
 
-            if (timeLeft <= 10 && timeLeft > 0) {
-                timerDisplayEl.style.color = '#c0392b';
-            }
+        // [*** ฟังก์ชันสำหรับ Popup "Discover" ***]
+        function showDiscoverPopup(title, cardIds, callback) {
+            modalTitle.textContent = title;
+            modalMessage.innerHTML = ''; 
+            modalMessage.className = 'discover-grid'; 
             
-            // ตรวจสอบว่าการลดเวลาทำให้เกมจบทันทีหรือไม่
-            if (timeLeft <= 0) {
-                updateTimer(); // เรียก updateTimer เพื่อจัดการ logic การจบเกม
-            }
+            modalCloseButton.style.display = 'none';
+            modalRestartButton.style.display = 'none';
+
+            cardIds.forEach(cardId => {
+                const card = CARD_DB[cardId];
+                if (!card) {
+                    console.error("Discover Error: Card ID not found", cardId);
+                    return;
+                }
+                const img = document.createElement('img');
+                img.src = card.img;
+                img.alt = card.name;
+                img.className = 'discover-option-card';
+                
+                img.addEventListener('click', () => {
+                    hidePopup(); 
+                    callback(cardId); 
+                });
+                
+                modalMessage.appendChild(img);
+            });
+            
+            modalOverlay.style.display = 'flex';
         }
         
-        // [*** เพิ่ม: ฟังก์ชันสำหรับอัปเดตตัวจับเวลารายวินาที ***]
+        // [*** ฟังก์ชันสำหรับ Popup "Bob's Options" ***]
+        function showBobPopup(title, onChoose) {
+            modalTitle.textContent = title;
+            modalMessage.innerHTML = '';
+            modalMessage.className = 'discover-grid'; 
+            
+            modalCloseButton.style.display = 'none';
+            modalRestartButton.style.display = 'none';
+
+            const options = [
+                { id: 'freeze', name: 'Freeze the Shop', img: 'https://hearthstone.wiki.gg/images/thumb/BG31_BOBt.png/235px-BG31_BOBt.png' },
+                { id: 'recruit', name: 'Recruit a Minion', img: 'https://hearthstone.wiki.gg/images/thumb/BG31_BOBt2.png/235px-BG31_BOBt2.png' },
+                { id: 'refresh', name: 'Refresh the Tavern', img: 'https://hearthstone.wiki.gg/images/thumb/BG31_BOBt3.png/235px-BG31_BOBt3.png' },
+                { id: 'triple', name: 'Find a Triple', img: 'https://hearthstone.wiki.gg/images/thumb/BG31_BOBt4.png/235px-BG31_BOBt4.png' }
+            ];
+
+            options.forEach(opt => {
+                const div = document.createElement('div');
+                div.className = 'bob-option';
+                div.innerHTML = `
+                    <img src="${opt.img}" alt="${opt.name}">
+                    <p>${opt.name}</p>
+                `;
+                div.addEventListener('click', () => {
+                    hidePopup();
+                    onChoose(opt.id); 
+                });
+                modalMessage.appendChild(div);
+            });
+            
+            modalOverlay.style.display = 'flex';
+        }
+
+
+        // [*** ฟังก์ชันสำหรับอัปเดตตัวจับเวลารายวินาที ***]
         function updateTimer() {
             timeLeft--;
             timerDisplayEl.textContent = timeLeft;
             
             if (timeLeft <= 10) {
-                timerDisplayEl.style.color = '#c0392b'; // สีแดง
+                timerDisplayEl.style.color = '#c0392b'; 
             }
 
             if (timeLeft <= 0) {
@@ -738,6 +871,9 @@
             promptMessageEl = document.getElementById('prompt-message');
             timerStatEl = document.getElementById('timer-stat');
             timerDisplayEl = document.getElementById('timer-display');
+            boardCountEl = document.getElementById('board-count'); // [*** เพิ่ม ***]
+            handCountEl = document.getElementById('hand-count'); // [*** เพิ่ม ***]
+
 
             if (gameTimer) clearInterval(gameTimer);
 
@@ -763,13 +899,12 @@
             undoButtonEl.removeEventListener('click', handleUndo);
             undoButtonEl.addEventListener('click', handleUndo);
 
-            // [*** แก้ไข: เริ่ม timer เสมอ ***]
             timerStatEl.style.display = 'block';
-            timeLeft = 75; // รีเซ็ตเวลา
+            timeLeft = 75; 
             timerDisplayEl.textContent = timeLeft;
             timerDisplayEl.style.color = '#f0b90b'; 
 
-            gameTimer = setInterval(updateTimer, 1000); // เรียกฟังก์ชัน updateTimer ทุกวิ
+            gameTimer = setInterval(updateTimer, 1000); 
 
             updateUI();
         }
@@ -781,6 +916,10 @@
             stepCountEl.textContent = gameState.steps;
             eruptionCountEl.textContent = gameState.eruptionCount;
             eruptionDamageEl.textContent = gameState.eruptionCount === 0 ? 0 : gameState.eruptionDamage;
+
+            // [*** เพิ่ม: อัปเดตตัวนับ ***]
+            boardCountEl.textContent = gameState.board.length;
+            handCountEl.textContent = gameState.hand.length;
 
             boardEl.innerHTML = '';
             gameState.board.forEach(minion => {
@@ -865,6 +1004,7 @@
             if (displayCost > gameState.mana) return false; 
 
             if (card.type === 'Minion') {
+                // [*** แก้ไข: ตรวจสอบบอร์ดเต็ม ***]
                 if (gameState.board.length >= 7) return false; 
             }
 
@@ -883,7 +1023,14 @@
             document.querySelectorAll('.minion-on-board.targeting').forEach(el => el.classList.remove('targeting'));
 
             if (gameState.isTargeting && gameState.targetingCard.id === 'shadowstep') {
-                document.querySelectorAll('.minion-on-board').forEach(el => el.classList.add('targeting'));
+                document.querySelectorAll('.minion-on-board').forEach(el => {
+                    const minionId = el.dataset.instanceId;
+                    const minion = gameState.board.find(m => m.instanceId === minionId);
+                    // [*** เพิ่ม: ห้าม target Ancient ***]
+                    if (minion && minion.id !== 'ancientofyore') {
+                         el.classList.add('targeting');
+                    }
+                });
             }
         }
 
@@ -892,8 +1039,32 @@
         function handleUndo() {
             if (gameStateHistory.length === 0 || gameState.isGameOver) return;
             gameState = gameStateHistory.pop();
-            // (หมายเหตุ: การ Undo จะไม่คืนเวลาที่เสียไป)
             updateUI();
+        }
+        
+        // [*** แก้ไข: ตรวจสอบมือเต็ม ***]
+        function addCardToHand(cardId, costOverride = null) {
+            if (gameState.hand.length >= 10) return; // มือเต็ม
+            
+            const baseCard = CARD_DB[cardId];
+            if (!baseCard) {
+                console.error("Card ID not found in DB:", cardId);
+                return;
+            }
+            
+            const newCard = {
+                ...baseCard,
+                currentCost: costOverride !== null ? costOverride : baseCard.baseCost,
+                instanceId: `card_${Date.now()}_${Math.random()}`
+            };
+            
+            if (newCard.id === 'tidepool') {
+                newCard.spellsPlayed = 0;
+                newCard.spellsHistory = [];
+                newCard.wasBounced = false;
+            }
+            
+            gameState.hand.push(newCard);
         }
 
         function playCard(card) {
@@ -918,10 +1089,10 @@
             switch (card.id) {
                 case 'shadowstep':
                     handleShadowstep(card);
-                    triggerSpellPlayed();
+                    triggerSpellPlayed(card);
                     break;
                 case 'tidepool':
-                    handleTidepool(card);
+                    handleTidepool(card); 
                     break;
                 case 'sonya':
                     handleSonya(card);
@@ -930,7 +1101,7 @@
                     handleScoundrel(card);
                     break;
                 case 'bob':
-                    handleBob(card);
+                    handleBob(card); 
                     break;
                 case 'deios':
                     handleDeios(card);
@@ -938,19 +1109,50 @@
                 case 'incindius':
                     handleIncindius(card);
                     break;
+                case 'ancientofyore': 
+                    handleAncientOfYore(card);
+                    break;
+                
+                // การ์ดใหม่
+                case 'coin':
+                    handleCoin(card);
+                    triggerSpellPlayed(card);
+                    break;
+                case 'preparation':
+                    handlePreparation(card);
+                    triggerSpellPlayed(card);
+                    break;
+                case 'thalnos':
+                    handleThalnos(card);
+                    break;
+                case 'magmarager':
+                    handleMagmaRager(card);
+                    break;
+                case 'icerager':
+                    handleIceRager(card);
+                    break;
+                case 'amgamrager':
+                    handleAmgamRager(card);
+                    break;
             }
 
-            if (card.type === 'Minion') {
+            if (card.type === 'Minion' && card.id !== 'tidepool' && card.id !== 'bob') {
                 triggerMinionPlayed(card);
             }
 
-            updateUI();
+            if (card.id !== 'tidepool' && card.id !== 'bob') {
+                 updateUI();
+            }
         }
 
-        function triggerSpellPlayed() {
+        function triggerSpellPlayed(playedCard) {
             gameState.hand.forEach(card => {
                 if (card.id === 'tidepool') {
                     card.spellsPlayed++;
+                    if (!card.spellsHistory) card.spellsHistory = [];
+                    if (card.spellsHistory.length < 3) {
+                        card.spellsHistory.push(playedCard.id);
+                    }
                 }
             });
         }
@@ -959,16 +1161,7 @@
             const sonya = gameState.board.find(m => m.id === 'sonya');
             
             if (sonya && playedMinion.id !== 'sonya' && CARD_DB[playedMinion.id].baseCost === 1) {
-                
-                if (gameState.hand.length < 10) {
-                    const copy = { 
-                        ...CARD_DB[playedMinion.id], 
-                        currentCost: 0, 
-                        instanceId: `card_${Date.now()}_sonya_copy`,
-                        ...(playedMinion.id === 'tidepool' && { spellsPlayed: 0 }) 
-                    };
-                    gameState.hand.push(copy);
-                }
+                addCardToHand(playedMinion.id, 0);
             }
         }
 
@@ -976,12 +1169,15 @@
             return gameState.board.some(minion => minion.id === 'deios');
         }
 
+        function isAncientOnBoard() {
+            return gameState.board.some(minion => minion.id === 'ancientofyore');
+        }
+
         // --- Card Handlers ---
 
         function handleShadowstep(card) {
             gameState.isTargeting = true;
             gameState.targetingCard = card;
-            updateUI(); 
         }
 
         function handleMinionClick(minion) {
@@ -989,10 +1185,15 @@
 
             if (gameState.targetingCard.id === 'shadowstep') {
                 
+                if (minion.id === 'ancientofyore') {
+                    return; 
+                }
+
                 gameStateHistory.push(JSON.parse(JSON.stringify(gameState)));
 
                 gameState.board = gameState.board.filter(m => m.instanceId !== minion.instanceId);
 
+                // [*** แก้ไข: ตรวจสอบมือเต็ม ***]
                 if (gameState.hand.length < 10) {
                     const bouncedCardInfo = CARD_DB[minion.id]; 
                     const bouncedCard = { ...bouncedCardInfo }; 
@@ -1001,7 +1202,9 @@
                     bouncedCard.instanceId = minion.instanceId; 
                     
                     if (bouncedCard.id === 'tidepool') {
-                        bouncedCard.spellsPlayed = 0; 
+                        bouncedCard.spellsPlayed = 0;
+                        bouncedCard.spellsHistory = [];
+                        bouncedCard.wasBounced = true; 
                     }
                     
                     gameState.hand.push(bouncedCard);
@@ -1015,50 +1218,143 @@
 
         function handleTidepool(card) {
             gameState.board.push(card);
+            triggerMinionPlayed(card); 
+            updateUI(); // ลงบอร์ดก่อน
+
+            const deios = isDeiosOnBoard();
             
-            const amount = isDeiosOnBoard() ? 2 : 1;
-            for (let i = 0; i < amount; i++) {
-                if (gameState.hand.length < 10) {
-                    gameState.hand.push({ 
-                        ...CARD_DB.shadowstep, 
-                        currentCost: 0, 
-                        instanceId: `card_${Date.now()}_pupil_ss${i}` 
-                    });
-                }
+            let options;
+            if (card.wasBounced && card.spellsHistory && card.spellsHistory.length === 3) {
+                options = card.spellsHistory;
+            } else {
+                options = ['shadowstep', 'coin', 'preparation'];
             }
+
+            // Callback 1
+            const discoverCallback1 = (chosenCardId1) => {
+                addCardToHand(chosenCardId1); 
+                
+                if (deios) {
+                    // [*** แก้ไข: ต้องรอ updateUI() หลังจากเลือกใบที่ 2 ***]
+                    showDiscoverPopup('เลือกใบที่ 2 (Deios)', shuffle([...options]), discoverCallback2);
+                } else {
+                    updateUI(); 
+                }
+            };
             
-            // [*** เพิ่ม: ลดเวลา ***]
-            const penalty = isDeiosOnBoard() ? 4 : 2;
-            applyTimePenalty(penalty);
+            // Callback 2 (for Deios)
+            const discoverCallback2 = (chosenCardId2) => {
+                addCardToHand(chosenCardId2); 
+                updateUI(); 
+            };
+            
+            showDiscoverPopup('เลือกใบที่ 1', shuffle([...options]), discoverCallback1);
         }
 
         function handleSonya(card) {
             gameState.board.push(card);
+            triggerMinionPlayed(card);
         }
 
         function handleScoundrel(card) {
             gameState.board.push(card);
             gameState.scoundrelDiscount = isDeiosOnBoard() ? 6 : 3;
+            triggerMinionPlayed(card);
         }
 
         function handleBob(card) {
             gameState.board.push(card);
-            const manaGain = isDeiosOnBoard() ? 6 : 3;
-            gameState.mana = Math.min(10, gameState.mana + manaGain);
-            
-            // [*** เพิ่ม: ลดเวลา ***]
-            const penalty = isDeiosOnBoard() ? 4 : 2;
-            applyTimePenalty(penalty);
+            triggerMinionPlayed(card);
+            updateUI(); // ลงบอร์ดก่อน
+
+            const deios = isDeiosOnBoard();
+
+            const handleBobChoice = (choiceId, isDeiosRound) => {
+                let isAsync = false; 
+                
+                switch (choiceId) {
+                    case 'freeze':
+                        break; 
+                    case 'recruit':
+                        addCardToHand('magmarager');
+                        break;
+                    case 'refresh':
+                        isAsync = true;
+                        const ragerOptions = ['magmarager', 'icerager', 'amgamrager'];
+                        showDiscoverPopup('Refresh the Tavern', ragerOptions, (chosenRager) => {
+                            addCardToHand(chosenRager);
+                            gameState.mana = Math.min(10, gameState.mana + 3);
+                            
+                            if (deios && !isDeiosRound) {
+                                showBobPopup('เลือกอีก 1 อย่าง (Deios)', (choice2) => handleBobChoice(choice2, true));
+                            } else {
+                                updateUI(); 
+                            }
+                        });
+                        break;
+                    case 'triple':
+                        addCardToHand('thalnos');
+                        addCardToHand('thalnos');
+                        addCardToHand('thalnos');
+                        break;
+                }
+                
+                if (!isAsync) {
+                    if (deios && !isDeiosRound) {
+                        showBobPopup('เลือกอีก 1 อย่าง (Deios)', (choice2) => handleBobChoice(choice2, true));
+                    } else {
+                        updateUI();
+                    }
+                }
+            };
+
+            showBobPopup('เลือก 1 อย่าง', (choice1) => handleBobChoice(choice1, false));
         }
 
         function handleDeios(card) {
             gameState.board.push(card);
+            triggerMinionPlayed(card);
         }
 
         function handleIncindius(card) {
             gameState.board.push(card);
             const amount = isDeiosOnBoard() ? 10 : 5;
             gameState.eruptionCount += amount;
+            triggerMinionPlayed(card);
+        }
+        
+        function handleAncientOfYore(card) {
+            gameState.board.push(card);
+            triggerMinionPlayed(card);
+        }
+        
+        // --- Handlers การ์ดใหม่ ---
+        function handleCoin(card) {
+            gameState.mana = Math.min(10, gameState.mana + 1);
+        }
+
+        function handlePreparation(card) {
+            // (TriggerSpell อยู่ใน playCard)
+        }
+
+        function handleThalnos(card) {
+            gameState.board.push(card);
+            triggerMinionPlayed(card);
+        }
+
+        function handleMagmaRager(card) {
+            gameState.board.push(card);
+            triggerMinionPlayed(card);
+        }
+
+        function handleIceRager(card) {
+            gameState.board.push(card);
+            triggerMinionPlayed(card);
+        }
+
+        function handleAmgamRager(card) {
+            gameState.board.push(card);
+            triggerMinionPlayed(card);
         }
 
 
@@ -1073,12 +1369,23 @@
             
             const totalDamage = gameState.eruptionCount * gameState.eruptionDamage;
 
+            const ancientOnBoard = isAncientOnBoard();
+            const damageTimingMessage = ancientOnBoard ?
+                "ความเสียหายรวมที่จะเกิดขึ้นเมื่อจบเทิร์นนี้" :
+                "ความเสียหายรวมเทิร์นถัดไป";
+                
+            // [*** เพิ่ม: คำแนะนำ ***]
+            let adviceMessage = "";
+            if (!ancientOnBoard) {
+                adviceMessage = "\n\n(คำแนะนำ: คุณควรลง Ancient of Yore เป็นการ์ดใบสุดท้าย เพื่อให้ดาเมจเกิดขึั้นเลยในเทิร์นนี้)";
+            }
+
             const messageString = `
 Steps ที่เล่น: ${gameState.steps}
 Eruptions ในเดค: ${gameState.eruptionCount}
 Eruption Damage ต่อใบ (ณ สิ้นเทิร์น): ${gameState.eruptionDamage}
 -------------------------
-ความเสียหายรวมเทิร์นถัดไป: ${totalDamage}
+${damageTimingMessage}: ${totalDamage}${adviceMessage}
             `;
 
             showPopup('จบการฝึกฝน', messageString, true);
